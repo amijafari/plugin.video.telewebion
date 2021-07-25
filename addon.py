@@ -120,7 +120,7 @@ def list_categories():
         # Create a URL for a plugin recursive call.
         # Example: plugin://plugin.video.example/?action=listing&category=Animals
         url = get_url(
-            action='videos', channel_id=category['descriptor'], channel_name=category['name'], page=0,
+            action='videos', channel_id=category['descriptor'], channel_name=unicode(category['name']).encode('utf-8'), page=0,
             date=jdatetime.date.today().strftime(_date_format))
         # is_folder = True means that this item opens a sub-list of lower level items.
         is_folder = True
