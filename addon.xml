@@ -4,7 +4,7 @@ version="1.0"
 name="Telewebion"
 provider-name="Meghdad">
 <requires>
-  <import addon="xbmc.python" version="3.0.0"/>
+  <import addon="xbmc.python" version="2.14.0"/>
   <import addon="script.module.beautifulsoup4" version="4.6.3"/> 
   <import addon="script.module.inputstreamhelper" version="0.5.0+matrix.1"/> 
 </requires>
@@ -13,7 +13,7 @@ provider-name="Meghdad">
 </extension>
 <extension point="xbmc.addon.metadata">
   <summary lang="fa">افزونه تلوبیون</summary>
-  <description lang="fa_IR">ویدیوهای سایت آپارات در خانه شما</description> 
+  <description lang="fa_IR">ویدیوهای سایت تلوبیون در خانه شما</description> 
   <assets>
     <icon>resources/icon.png</icon>
     <fanart>resources/fanart.jpg</fanart>   

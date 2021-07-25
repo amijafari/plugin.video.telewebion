@@ -4,11 +4,10 @@
 # Created on: 28.11.2014
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
-from ssl import PROTOCOL_TLS_SERVER
-from urllib.parse import parse_qsl
+from urlparse import parse_qsl
 import sys
-import urllib.request
-import urllib.parse
+import urllib2, urllib
+import urllib2, urllib, urlparse
 import json
 import xbmc
 import xbmcgui
@@ -39,7 +38,7 @@ def get_url(**kwargs):
     :return: plugin call URL
     :rtype: str
     """
-    return '{0}?{1}'.format(_url,urllib.parse.urlencode(kwargs))
+    return '{0}?{1}'.format(_url,urllib.urlencode(kwargs))
 
 
 def get_categories():
@@ -57,7 +56,7 @@ def get_categories():
     :rtype: types.GeneratorType
     """
 
-    response =urllib.request.urlopen( create_request(_channels_path))
+    response =urllib2.urlopen( create_request(_channels_path))
     catsData = json.loads(response.read())
 # categories is an array of this structure:
 # {"id":"22","link":"https:\/\/www.aparat.com\/game","name":"\u06af\u06cc\u0645","videoCnt":"1221861","imgSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22.png?3","patternBgColor":"#1a1a1c","patternBgSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22_pattern.jpg?3","patternIconSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22_onpattern.png?3"}
@@ -73,8 +72,8 @@ def get_url(**kwargs):
     :return: plugin call URL
     :rtype: str
     """
-    print('urlencode='+urllib.parse.urlencode(kwargs))
-    return '{0}?{1}'.format(_url, urllib.parse.urlencode(kwargs))
+    print 'urlencode='+urllib.urlencode(kwargs)
+    return '{0}?{1}'.format(_url, urllib.urlencode(kwargs))
 
 
 def get_videos(channel_id,page):
@@ -95,7 +94,7 @@ def get_videos(channel_id,page):
     date=jdatetime.date.today()
     date=date.replace(day=date.day-1)
     url = _channel_videos_path.format(channel_id=channel_id,date=date.strftime(_date_format),page=page)
-    response = urllib.request.urlopen(create_request( url))
+    response = urllib2.urlopen(create_request( url))
     vidsData = json.loads(response.read())
     return vidsData['data']
 
@@ -176,7 +175,7 @@ def list_videos(channel_id, channel_name, page,date,append):
     xbmcplugin.endOfDirectory(_handle)
 
 def add_videos(videos,channel_name):
-    print("vidscount="+str(len(videos)))
+    print 'vidscount='+unicode(len(videos))
     for video in videos:
         # Create a list item with a text label and a thumbnail image.
         list_item = xbmcgui.ListItem(label=video['program']['title'])
@@ -197,8 +196,6 @@ def add_videos(videos,channel_name):
         # Create a URL for a plugin recursive call.
         # Example: plugin://plugin.video.example/?action=play&video=http://www.vidsplay.com/wp-content/uploads/2017/04/crab.mp4
 
-     
-
         url = get_url(action='play', video_id=video['id'])
         # Add the list item to a virtual Kodi folder.
         # is_folder = False means that this item won't open any sub-list.
@@ -212,7 +209,7 @@ def get_playable_video_url(videoPageUrl):
     # based on the connection quality
     # currently, it returns the highest quality video available based on a tricky descending sort
     xbmc.log(videoPageUrl)
-    url = urllib.request.urlopen(create_request( videoPageUrl))
+    url = urllib2.urlopen(create_request( videoPageUrl))
     soup = BeautifulSoup(url.read())
     playerScript = soup.findAll('script')[-1]
     scriptStr =playerScript.string
@@ -230,7 +227,7 @@ def get_playable_video_url(videoPageUrl):
 
 def get_video_data(video_id):
     url = _video_path.format(id=video_id)
-    response = urllib.request.urlopen(create_request( url))
+    response = urllib2.urlopen(create_request( url))
     vidsData = json.loads(response.read())
     return vidsData['data']
 
@@ -264,7 +261,7 @@ def play_video(video_id):
         xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
 def create_request(url):
-    return urllib.request.Request(url,headers={'Origin':'https://pwa.telewebion.com/','Referer':'https://pwa.telewebion.com/'})
+    return urllib2.Request(url,headers={'Origin':'https://pwa.telewebion.com/','Referer':'https://pwa.telewebion.com/'})
 
 
 def router(paramstring):
@@ -278,7 +275,7 @@ def router(paramstring):
     # Parse a URL-encoded paramstring to the dictionary of
     # {<parameter>: <value>} elements
     params = dict(parse_qsl(paramstring))
-    print('parameters='+paramstring)
+    print 'parameters='+paramstring
     # Check the parameters passed to the plugin
     if params:
         if params['action'] == 'videos':
