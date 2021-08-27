@@ -22,6 +22,7 @@ _date_format='%Y-%m-%d'
 _baseUrl = 'https://api.telewebion.com/v3/'
 _channels_path = _baseUrl+'channels'
 _channel_videos_path = _baseUrl+'episodes/content-archive?channel_desc={channel_id}&date={date}&page={page}'
+_channel_live_path = _baseUrl+'/channels/{channel_id}/details?device=tv&logo_version=4&thumb_size=240&dvr=1'
 _video_path=_baseUrl+'episodes/{id}/details?download_link=1&device=tv&enforce_copyright=1&'
 _videoUrl = _baseUrl+'video/videohash/{vidUid}'
 # Get the plugin url in plugin:// notation.
@@ -59,22 +60,9 @@ def get_categories():
 
     response =urllib.request.urlopen( create_request(_channels_path))
     catsData = json.loads(response.read())
-# categories is an array of this structure:
-# {"id":"22","link":"https:\/\/www.aparat.com\/game","name":"\u06af\u06cc\u0645","videoCnt":"1221861","imgSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22.png?3","patternBgColor":"#1a1a1c","patternBgSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22_pattern.jpg?3","patternIconSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22_onpattern.png?3"}
+    # categories is an array of this structure:
+    # {"id":"22","link":"https:\/\/www.aparat.com\/game","name":"\u06af\u06cc\u0645","videoCnt":"1221861","imgSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22.png?3","patternBgColor":"#1a1a1c","patternBgSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22_pattern.jpg?3","patternIconSrc":"https:\/\/www.aparat.com\/public\/public\/images\/etc\/category\/22_onpattern.png?3"}
     return catsData['data']
-
-
-def get_url(**kwargs):
-    """
-    Create a URL for calling the plugin recursively from the given set of keyword arguments.
-
-    :param kwargs: "argument=value" pairs
-    :type kwargs: dict
-    :return: plugin call URL
-    :rtype: str
-    """
-    print('urlencode='+urllib.parse.urlencode(kwargs))
-    return '{0}?{1}'.format(_url, urllib.parse.urlencode(kwargs))
 
 
 def get_videos(channel_id,page):
@@ -160,6 +148,10 @@ def list_videos(channel_id, channel_name, page,date,append):
     # Set plugin content. It allows Kodi to select appropriate views
     # for this type of content.
     xbmcplugin.setContent(_handle, 'videos')
+
+    # Add live TV url
+    add_live(channel_id, channel_name)
+
     # Get the list of videos in the category.
     videos = get_videos(channel_id,page)
     add_videos(videos,channel_name)
@@ -171,9 +163,40 @@ def list_videos(channel_id, channel_name, page,date,append):
     xbmcplugin.addDirectoryItem(_handle,load_more_url,load_more_list_item,True)
     
     # Add a sort method for the virtual folder items (alphabetically, ignore articles)
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
+    #xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
+
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
+
+def add_live(channel_id, channel_name):
+    url = _channel_live_path.format(channel_id=channel_id)
+    response = urllib.request.urlopen(create_request(url))
+    details = json.loads(response.read())
+    data = details['data']
+
+    if len(data) == 0:
+        return
+
+    data = data[0]
+
+    list_item = xbmcgui.ListItem(label='پخش زنده ' + channel_name)
+    
+    list_item.setInfo('video', {'title': 'پخش زنده ' + channel_name,
+                                'genre': channel_name,
+                                'mediatype': 'video'})
+    
+    image = data['channel']['image_name']
+
+    list_item.setArt({'thumb': image, 'icon': image, 'fanart': image})
+        
+    list_item.setProperty('IsPlayable', 'true')
+
+    #url = get_url(action='play', video_id=video['id'])
+    url = data['links'][0]['link']
+        
+    is_folder = False
+        
+    xbmcplugin.addDirectoryItem(_handle, url, list_item, is_folder)
 
 def add_videos(videos,channel_name):
     print("vidscount="+str(len(videos)))
@@ -286,7 +309,7 @@ def router(paramstring):
             list_videos(params['channel_id'], params['channel_name'],
                         int(params['page']),params['date'],False)
         elif params['action'] == 'nextpage' and params['type']=='videos':
-             list_videos(params['channel_id'], params['channel_name'],
+            list_videos(params['channel_id'], params['channel_name'],
                         int( params['page']),params['date'],True)
         elif params['action'] == 'play':
             play_video(params['video_id'])
